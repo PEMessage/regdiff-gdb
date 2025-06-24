@@ -8,7 +8,8 @@ class RegDiff(gdb.Command):
     def __init__(self):
         super(RegDiff, self).__init__("reg-diff", gdb.COMMAND_DATA)
         self.last_registers = {}
-        self.group_reg = (None, self.fetch_register_list('general'))
+        self.match_groups = set()
+        self.match_registers = None
 
     # Thanks to gdb-dashboard:
     # https://github.com/cyrus-and/gdb-dashboard/blob/616ed5100d3588bb70e3b86737ac0609ce0635cc/.gdbinit#L2095
@@ -42,10 +43,17 @@ class RegDiff(gdb.Command):
 
     def invoke(self, arg, from_tty):
         """Compare current register values with previous ones."""
-        current_registers = {}
+        # args = gdb.string_to_argv(arg)
 
+        # TODO: get match_groups from args
+        match_groups = set(['general'])
+        if match_groups != self.match_groups:
+            self.match_registers = self.fetch_register_list(*match_groups)
+            self.match_groups = match_groups
+
+        current_registers = {}
         # Get current values for all registers
-        for reg in self.group_reg[1]:
+        for reg in self.match_registers:
             value = self.get_register_value(reg)
             if value is not None:
                 current_registers[reg] = str(value)
